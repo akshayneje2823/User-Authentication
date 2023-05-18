@@ -1,20 +1,34 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv'
-
+import router from  './routes/authRoute.js';
+import { connectDB } from './config/db.js';
 
 // config file
 dotenv.config({path:'./config/.env'});
 
 const app = express();
-app.use(cors())
 
-app.get('/', async (req, res) => {
-    res.send('<h1>Hello</h1>');
+// to read req.body data
+app.use(express.json());
+app.use(cors());
 
-    console.log(req.params)
-})
+// connect DB
+connectDB()
 
-app.listen(process.env.PORT, () => {
+
+// router
+app.use('/api/auth',router)
+
+
+const server = app.listen(process.env.PORT, () => {
     console.log("server is running " + process.env.PORT)
 })
+
+
+//any error occur
+process.on("unhandledRejection",(err,promise)=>{
+    console.log(`Logged Error: ${err}`);
+    server.close(()=>process.exit(1))
+})
+
