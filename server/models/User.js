@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 const userSchema = mongoose.Schema({
     username: {
@@ -17,7 +18,7 @@ const userSchema = mongoose.Schema({
     password: {
         type: String,
         required: [true, "Please add password"],
-        // minLength: 6,
+        minlength: 4,
         select: false
     },
 
@@ -32,11 +33,17 @@ userSchema.pre("save", async function (next) {
     next()
 });
 
-userSchema.methods.matchPassword = async function (password) {
+userSchema.methods.matchPasswords = async function (password) {
     return await bcrypt.compare(password, this.password)
 }
 
+userSchema.methods.getSignedToken = async function () {
+    return await jwt.sign({ id: this._id }, "999ppp000kkk", { expiresIn: "10Min" })
+}
 
 export const User = mongoose.model('User', userSchema)
+
+
+
 
 

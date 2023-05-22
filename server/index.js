@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv'
 import router from  './routes/authRoute.js';
 import { connectDB } from './config/db.js';
+import { errorHandler } from './middleware/error.js';
 
 // config file
 dotenv.config({path:'./config/.env'});
@@ -20,6 +21,7 @@ connectDB()
 // router
 app.use('/api/auth',router)
 
+app.use(errorHandler)
 
 const server = app.listen(process.env.PORT, () => {
     console.log("server is running " + process.env.PORT)

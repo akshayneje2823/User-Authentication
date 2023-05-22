@@ -1,6 +1,5 @@
 import { User } from "../models/User.js";
-import bcrypt, { hash } from 'bcrypt';
-
+import ErrorResponse from "../utils/errorResponse.js";
 
 
 // register route
@@ -8,26 +7,26 @@ export const register = async (req, res, next) => {
 
     const { username, password, email } = req.body;
 
-
     try {
 
         // console.log(req.body);
         // const salt = bcrypt.genSaltSync(10);
         // const hashedPassword = bcrypt.hashSync(password, salt)
-
         // console.log(password + "\n" + hashedPassword)
-        console.log("before", req.body)
+
         const user = await User.create({
             username, email, password
         });
 
-        res.status(201).json({
-            success: true,
-            user: user
-        });
+        // res.status(201).json({
+        //     success: true,
+        //     user: user
+        // });
+
+        sendToken(user, 201, res)
 
     } catch (error) {
-        res.send({ status: 500, message: error })
+        next(error)
     }
 
 }
@@ -37,25 +36,28 @@ export const login = async (req, res, next) => {
 
     const { email, password } = req.body;
 
-    if (!email && !password)  res.status(401).json({ success: false, error: "Please provide email and password" })
 
     try {
-        const user = await User.findOne({ email }).select('password');
+        if (!email || !password) next(new ErrorResponse("Please provide email and password", 400))
 
-        if (!user) res.status(404).json({ success: false, error: "User not found" })
+        const user = await User.findOne({ email }).select('+password');
+        // console.log(user)
 
-        const isMatch = await user.matchPassword(password);
+        if (!user) next(new ErrorResponse("User not found", 401));
 
-        if (!isMatch)  res.status(400).json({ success: true, error: "password doesn't match" })
+        const isMatch = await user.matchPasswords(password);
 
+        if (!isMatch) next(new ErrorResponse("password doesn't match", 401))
 
-        res.status(200).json({
-            success: true,
-            "token": "abc90909token090xy"
-        })
-        
+        // res.status(201).json({
+        //     success: true,
+        //     "token": "abc90909token090xy"
+        // });
+
+        sendToken(user, 200, res)
+
     } catch (error) {
-        res.status(400).json({ success: false, error: error.message })
+        next(error)
     }
 
 
@@ -64,9 +66,25 @@ export const login = async (req, res, next) => {
 // forget password route
 export const forgetPassword = async (req, res, next) => {
 
-}
+
+
+};
 
 // reset password route
 export const resetPassword = async (req, res, next) => {
 
-}
+
+
+};
+
+
+// sending Token
+async function sendToken(user, statusCode, res) {
+
+    let token = await user.getSignedToken();
+    // console.log(token)
+    res.status(statusCode).json({
+        success: true,
+        token
+    })
+};
